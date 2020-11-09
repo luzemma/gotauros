@@ -179,13 +179,15 @@ type Balance struct {
 	} `json:"balances"`
 }
 
-// TradesHistory : params for request trades history
-type TradesHistoryParams struct {
-	Limit  int64 `json:"limit,omitempty"`
-	Offset int64 `json:"offset,omitempty"`
+// TradesHistory : struct for trades history response
+type TradesHistory struct {
+	Success bool    `json:"success"`
+	Msg     string  `json:"msg"`
+	Count   int64   `json:"count"`
+	Trades  []Trade `json:"payload"`
 }
 
-// Trade : struct for trades history response
+// Trade : struct for trades in TradesHistory response
 type Trade struct {
 	Market         string
 	AmountPaid     float64
@@ -463,17 +465,21 @@ func (t *TauAPI) CloseOrder(orderID int64) error {
 }
 
 // GetMyTradesHistory - returns my trades history
-func (t *TauAPI) GetMyTradesHistory(market string) error {
-	_, err := t.doTauRequest(&TauReq{
-		Version:   2,
+func (t *TauAPI) GetMyTradesHistory(market string) (*TradesHistory, error) {
+	jsonData, err := t.doTauRequest(&TauReq{
+		Version:   1,
 		Method:    "GET",
 		Path:      "trading/my-trades/" + market,
 		NeedsAuth: true,
 	})
+	var history TradesHistory
 	if err != nil {
-		return fmt.Errorf("GetMyTradesHistory->%v", err)
+		return nil, fmt.Errorf("GetMyTradesHistory->%v", err)
 	}
-	return nil
+	if err := json.Unmarshal(jsonData, &history); err != nil {
+		return nil, fmt.Errorf("GetMyTradesHistory->%v", err)
+	}
+	return &history, nil
 }
 
 // Login - simulate a login to get the jwt token
