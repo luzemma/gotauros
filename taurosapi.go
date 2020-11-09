@@ -467,7 +467,7 @@ func (t *TauAPI) CloseOrder(orderID int64) error {
 // GetMyTradesHistory - returns my trades history
 func (t *TauAPI) GetMyTradesHistory(market string) (*TradesHistory, error) {
 	jsonData, err := t.doTauRequest(&TauReq{
-		Version:   1,
+		Version:   2,
 		Method:    "GET",
 		Path:      "trading/my-trades/" + market,
 		NeedsAuth: true,
