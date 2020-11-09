@@ -179,6 +179,24 @@ type Balance struct {
 	} `json:"balances"`
 }
 
+// TradesHistory : params for request trades history
+type TradesHistoryParams struct {
+	Limit  int64 `json:"limit,omitempty"`
+	Offset int64 `json:"offset,omitempty"`
+}
+
+// Trade : struct for trades history response
+type Trade struct {
+	Market         string
+	AmountPaid     float64
+	AmountReceived float64
+	Price          string
+	FeeAmount      float64
+	Side           string
+	Fee            string
+	CreatedAt      string
+}
+
 // Webhook - data of a Webhook
 type Webhook struct {
 	ID                   int64  `json:"id"`
@@ -444,6 +462,20 @@ func (t *TauAPI) CloseOrder(orderID int64) error {
 	return nil
 }
 
+// GetMyTradesHistory - returns my trades history
+func (t *TauAPI) GetMyTradesHistory(market string) error {
+	_, err := t.doTauRequest(&TauReq{
+		Version:   2,
+		Method:    "GET",
+		Path:      "trading/my-trades/" + market,
+		NeedsAuth: true,
+	})
+	if err != nil {
+		return fmt.Errorf("GetMyTradesHistory->%v", err)
+	}
+	return nil
+}
+
 // Login - simulate a login to get the jwt token
 func (t *TauAPI) Login(email string, password string) (jwtToken string, err error) {
 	jsonPostMsg, _ := json.Marshal(&Message{Email: email, Password: password})
@@ -513,11 +545,13 @@ func (t *TauAPI) doTauRequest(tauReq *TauReq) (msgdata json.RawMessage, e error)
 		path = "/api/" + apiVersion + "/" + tauReq.Path + "/"
 		message = nonce + tauReq.Method + path + postMsg
 		messageHash = sha256.Sum256([]byte(message))
-		if d, err := base64.StdEncoding.DecodeString(t.APISecret); err != nil {
+
+		d, err := base64.StdEncoding.DecodeString(t.APISecret)
+		if err != nil {
 			return nil, fmt.Errorf("doTauRequest -> Error decoding APiSecret base64: %v", err)
-		} else {
-			decodedAPISecret = d
 		}
+		decodedAPISecret = d
+
 		h := hmac.New(sha512.New, decodedAPISecret)
 		h.Write(messageHash[:])
 		signature := base64.StdEncoding.EncodeToString(h.Sum(nil))

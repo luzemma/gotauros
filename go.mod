@@ -1,3 +1,3 @@
-module github.com/99percent/gotauros
+module github.com/luzemma/gotauros
 
 go 1.14
